@@ -1,12 +1,15 @@
 package main
 
-import "database/sql"
+import (
+	"database/sql"
+	"fmt"
+)
 
 type product struct {
 	ID       int     `json:"id"`
-	Name     string  `json: "name"`
-	Quantity int     `json: "quantity"`
-	Price    float64 `json: "price"`
+	Name     string  `json:"name"`
+	Quantity int     `json:"quantity"`
+	Price    float64 `json:"price"`
 }
 
 func getProducts(db *sql.DB) ([]product, error) {
@@ -31,4 +34,15 @@ func getProducts(db *sql.DB) ([]product, error) {
 	}
 
 	return products, nil
+}
+
+func (p *product) getProduct(db *sql.DB) error {
+	query := fmt.Sprintf("SELECT name, quantity, price FROM products where id=%v", p.ID)
+	rows := db.QueryRow(query) // use QueryRow not Query when expecting atmost 1 row.
+	err := rows.Scan(&p.Name, &p.Quantity, &p.Price)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
