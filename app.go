@@ -58,6 +58,7 @@ func (app *App) getProducts(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *App) getProduct(w http.ResponseWriter, r *http.Request) {
+	// fetch the product id
 	vars := mux.Vars(r) // localhost:10000/product/1
 	key, err := strconv.Atoi(vars["id"])
 	if err != nil {
@@ -98,8 +99,36 @@ func (app *App) createProduct(w http.ResponseWriter, r *http.Request) {
 	sendResponse(w, http.StatusOK, p)
 }
 
+func (app *App) updateProduct(w http.ResponseWriter, r *http.Request) {
+	// fetch the product id
+	vars := mux.Vars(r) // localhost:10000/product/1
+	key, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		sendError(w, http.StatusBadRequest, "invalid product ID")
+		return
+	}
+
+	// Take input and turn it from json to struct
+	var p product
+	err = json.NewDecoder(r.Body).Decode(&p) // takes the json request and turns it into a go struct format (in our case is the product struct) & then put it in the p variable.
+	if err != nil {
+		sendError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+
+	p.ID = key
+	err = p.updateProduct(app.DB)
+	if err != nil {
+		sendError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	sendResponse(w, http.StatusOK, p)
+}
+
 func (app *App) handleRoutes() {
 	app.Router.HandleFunc("/products", app.getProducts).Methods("GET")
 	app.Router.HandleFunc("/product/{id}", app.getProduct).Methods("GET")
 	app.Router.HandleFunc("/product", app.createProduct).Methods("POST")
+	app.Router.HandleFunc("/product/{id}", app.updateProduct).Methods("PUT")
 }
