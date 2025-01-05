@@ -80,7 +80,26 @@ func (app *App) getProduct(w http.ResponseWriter, r *http.Request) {
 	sendResponse(w, http.StatusOK, p)
 }
 
+func (app *App) createProduct(w http.ResponseWriter, r *http.Request) {
+	var p product
+
+	err := json.NewDecoder(r.Body).Decode(&p) // takes the json request and turns it into a go struct format (in our case is the product struct) & then put it in the p variable.
+	if err != nil {
+		sendError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+
+	err = p.createProduct(app.DB)
+	if err != nil {
+		sendError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	sendResponse(w, http.StatusOK, p)
+}
+
 func (app *App) handleRoutes() {
 	app.Router.HandleFunc("/products", app.getProducts).Methods("GET")
 	app.Router.HandleFunc("/product/{id}", app.getProduct).Methods("GET")
+	app.Router.HandleFunc("/product", app.createProduct).Methods("POST")
 }
