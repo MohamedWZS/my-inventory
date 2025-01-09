@@ -51,14 +51,6 @@ func addProduct(name string, quantity int, price float64) {
 	}
 }
 
-func TestGetProduct(t *testing.T) {
-	clearTable()
-	addProduct("keyboard", 100, 500)
-	request, _ := http.NewRequest("GET", "/product/1", nil)
-	response := sendRequest(request)
-	checkStatuscode(t, http.StatusOK, response.Code)
-}
-
 func checkStatuscode(t *testing.T, expectedStatusCode int, actualStatusCode int) {
 	if expectedStatusCode != actualStatusCode {
 		t.Errorf("Expected status: %v, Received: %v", expectedStatusCode, actualStatusCode)
@@ -69,6 +61,14 @@ func sendRequest(request *http.Request) *httptest.ResponseRecorder {
 	recorder := httptest.NewRecorder()
 	a.Router.ServeHTTP(recorder, request)
 	return recorder
+}
+
+func TestGetProduct(t *testing.T) {
+	clearTable()
+	addProduct("keyboard", 100, 500)
+	request, _ := http.NewRequest("GET", "/product/1", nil)
+	response := sendRequest(request)
+	checkStatuscode(t, http.StatusOK, response.Code)
 }
 
 func TestCreateProduct(t *testing.T) {
@@ -92,4 +92,25 @@ func TestCreateProduct(t *testing.T) {
 	if m["quantity"] != 1.0 {
 		t.Errorf("Expected quantity: %v, Got: %v", 1, m["quantity"])
 	}
+}
+
+func TestDeleteProduct(t *testing.T) {
+	// Clear table and add a product.
+	clearTable()
+	addProduct("connector", 10, 10)
+
+	// Retrieve & Check if the product is added.
+	req, _ := http.NewRequest("GET", "/product/1", nil)
+	response := sendRequest(req)
+	checkStatuscode(t, http.StatusOK, response.Code)
+
+	// Delete the newly added product.
+	req, _ = http.NewRequest("DELETE", "/product/1", nil)
+	response = sendRequest(req)
+	checkStatuscode(t, http.StatusOK, response.Code)
+
+	// Retrieve it again to check whether it exists or not.
+	req, _ = http.NewRequest("GET", "/product/1", nil)
+	response = sendRequest(req)
+	checkStatuscode(t, http.StatusNotFound, response.Code)
 }
